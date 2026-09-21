@@ -3,14 +3,14 @@ spring:
     import: optional:file:.env[.properties]
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/payment_service
+    url: jdbc:postgresql://localhost:5444/payment_service
     username: postgres
     password: ${POSTGRES_PASSWORD}
 
   data:
     redis:
       host: localhost
-      port: 6380
+      port: 6379
 
   jpa:
     show-sql: true
