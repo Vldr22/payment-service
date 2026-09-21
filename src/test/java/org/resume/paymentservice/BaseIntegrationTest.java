@@ -12,7 +12,7 @@ import org.redisson.api.RedissonClient;
 import org.redisson.spring.starter.RedissonAutoConfiguration;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -28,7 +28,7 @@ public abstract class BaseIntegrationTest {
 
     private static final int WIREMOCK_PORT = 9999;
 
-    @MockBean
+    @MockitoBean
     private RedissonClient redissonClient;
 
     static final PostgreSQLContainer<?> postgres;
