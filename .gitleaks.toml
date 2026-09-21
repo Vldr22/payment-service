@@ -1,0 +1,13 @@
+title = "PaymentService gitleaks config"
+
+# Берём весь набор правил gitleaks по умолчанию и дополняем исключениями
+[extend]
+useDefault = true
+
+# Исключения добавляем только по факту ложного срабатывания и максимально узко.
+# Не исключаем целиком файлы, которые редактирует человек (.env.example, docker-compose.yml):
+[allowlist]
+description = "Тестовые ключи, захардкожены намеренно"
+paths = [
+    '''src/test/resources/application-test\.yml''',
+]
