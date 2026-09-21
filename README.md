@@ -1,6 +1,7 @@
+[![CI](https://github.com/Vldr22/payment-service/actions/workflows/ci.yml/badge.svg)](https://github.com/Vldr22/payment-service/actions/workflows/ci.yml)
 ![Java](https://img.shields.io/badge/Java-21-orange)
-![Maven](https://img.shields.io/badge/Maven-4.0.0-blue)
-![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.3.5-brightgreen)
+![Maven](https://img.shields.io/badge/Maven-3.9-blue)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.16-brightgreen)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-003153)
 ![Redis](https://img.shields.io/badge/Redis-7-7B001C)
 ![Stripe](https://img.shields.io/badge/Stripe-API-635BFF)
@@ -18,7 +19,7 @@
 
 ## Технологии
 
-- **Java 21** + **Spring Boot 3.3.5**
+- **Java 21** + **Spring Boot 3.5.16**
 - **PostgreSQL 16** — основное хранилище, миграции через Flyway
 - **Redis** — хранение JWT токенов (blacklist)
 - **Stripe API** — приём платежей, управление картами, webhook события
