@@ -16,6 +16,7 @@ import org.resume.paymentservice.model.enums.BillingAttemptStatus;
 import org.resume.paymentservice.repository.BillingAttemptRepository;
 import org.resume.paymentservice.service.subscription.BillingAttemptService;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,6 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.instancio.Select.field;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -33,6 +35,7 @@ class BillingAttemptServiceTest {
     private static final String STRIPE_PAYMENT_ID      = "pi_existing_123";
     private static final String NONEXISTENT_STRIPE_ID  = "pi_nonexistent_999";
     private static final String ERROR_MESSAGE          = "Card declined";
+    private static final LocalDateTime BILLING_PERIOD  = LocalDateTime.of(2026, 1, 1, 9, 0);
 
     @Mock
     private BillingAttemptRepository billingAttemptRepository;
@@ -53,22 +56,40 @@ class BillingAttemptServiceTest {
                 .create();
     }
 
-    // createPending
+    // findOrCreatePending
     /**
      * Проверяет создание новой попытки биллинга со статусом PENDING.
-     * Номер попытки и подписка должны корректно сохраниться.
+     * Номер попытки, подписка и период должны корректно сохраниться.
      */
     @Test
-    void shouldCreatePendingAttempt_withCorrectSubscriptionAndNumber() {
+    void shouldCreatePendingAttempt_whenPeriodNotBilledYet() {
+        when(billingAttemptRepository.findBySubscriptionIdAndBillingPeriod(subscription.getId(), BILLING_PERIOD))
+                .thenReturn(Optional.empty());
         when(billingAttemptRepository.save(any(BillingAttempt.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
 
-        BillingAttempt result = billingAttemptService.createPending(subscription, 1);
+        BillingAttempt result = billingAttemptService.findOrCreatePending(subscription, 1, BILLING_PERIOD);
 
         assertThat(result.getStatus()).isEqualTo(BillingAttemptStatus.PENDING);
         assertThat(result.getSubscription()).isEqualTo(subscription);
         assertThat(result.getAttemptNumber()).isEqualTo(1);
+        assertThat(result.getBillingPeriod()).isEqualTo(BILLING_PERIOD);
         verify(billingAttemptRepository).save(any(BillingAttempt.class));
+    }
+
+    /**
+     * Повторный прогон за тот же период переиспользует существующую попытку,
+     * а не создаёт новую — иначе подписка списалась бы дважды.
+     */
+    @Test
+    void shouldReuseExistingAttempt_whenPeriodAlreadyStarted() {
+        when(billingAttemptRepository.findBySubscriptionIdAndBillingPeriod(subscription.getId(), BILLING_PERIOD))
+                .thenReturn(Optional.of(attempt));
+
+        BillingAttempt result = billingAttemptService.findOrCreatePending(subscription, 1, BILLING_PERIOD);
+
+        assertThat(result).isEqualTo(attempt);
+        verify(billingAttemptRepository, never()).save(any(BillingAttempt.class));
     }
 
     // markSucceeded

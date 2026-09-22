@@ -38,17 +38,6 @@ public class StaffService {
         return staffRepository.save(staff);
     }
 
-    public Staff createAdmin(String name, String surname, String midname, String email, String rawPassword) {
-        return staffRepository.findByEmail(email)
-                .orElseGet(() -> saveNewAdmin(name, surname, midname, email, rawPassword));
-    }
-
-    private Staff saveNewAdmin(String name, String surname, String midname, String email, String rawPassword) {
-        String encoded = passwordEncoder.encode(rawPassword);
-        Staff admin = new Staff(name, surname, midname, email, encoded, Roles.ROLE_ADMIN, false);
-        return staffRepository.save(admin);
-    }
-
     public void validatePassword(String email, String rawPassword) {
         Staff staff = getByEmail(email);
         if (!passwordEncoder.matches(rawPassword, staff.getPassword())) {

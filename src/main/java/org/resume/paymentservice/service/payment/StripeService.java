@@ -5,14 +5,15 @@ import com.stripe.model.Customer;
 import com.stripe.model.PaymentIntent;
 import com.stripe.model.PaymentMethod;
 import com.stripe.model.Refund;
+import com.stripe.net.RequestOptions;
 import com.stripe.param.*;
 import lombok.extern.slf4j.Slf4j;
 import org.resume.paymentservice.contants.BillingConstants;
 import org.resume.paymentservice.exception.StripePaymentException;
+import org.resume.paymentservice.model.dto.data.BillingChargeData;
 import org.resume.paymentservice.model.dto.data.SavedCardData;
 import org.resume.paymentservice.model.dto.request.CreatePaymentRequest;
 import org.resume.paymentservice.model.dto.response.PaymentResponse;
-import org.resume.paymentservice.model.enums.Currency;
 import org.resume.paymentservice.model.enums.RefundReason;
 import org.springframework.stereotype.Service;
 
@@ -74,34 +75,40 @@ public class StripeService {
         }
     }
 
-    public PaymentIntent chargeWithSavedCard(BigDecimal amount, Currency currency,
-                                             String customerId, String paymentMethodId,
-                                             String description, Long subscriptionId) {
+    /**
+     * Списывает по подписке сохранённой картой.
+     * Повторный запрос с тем же ключом идемпотентности вернёт созданный ранее PaymentIntent.
+     */
+    public PaymentIntent chargeWithSavedCard(BillingChargeData data) {
         try {
-            long amountInCents = convertToCents(amount);
+            long amountInCents = convertToCents(data.getAmount());
 
             PaymentIntentCreateParams params = PaymentIntentCreateParams.builder()
                     .setAmount(amountInCents)
-                    .setCurrency(currency.name().toLowerCase())
-                    .setCustomer(customerId)
-                    .setPaymentMethod(paymentMethodId)
-                    .setDescription(description)
+                    .setCurrency(data.getCurrency().name().toLowerCase())
+                    .setCustomer(data.getCustomerId())
+                    .setPaymentMethod(data.getPaymentMethodId())
+                    .setDescription(data.getDescription())
                     .setConfirm(true)
                     .setOffSession(true)
                     .putMetadata(BillingConstants.METADATA_KEY_TYPE, BillingConstants.METADATA_TYPE_BILLING)
-                    .putMetadata(BillingConstants.METADATA_KEY_SUBSCRIPTION_ID, subscriptionId.toString())
+                    .putMetadata(BillingConstants.METADATA_KEY_SUBSCRIPTION_ID, data.getSubscriptionId().toString())
                     .build();
 
-            PaymentIntent paymentIntent = PaymentIntent.create(params);
+            RequestOptions options = RequestOptions.builder()
+                    .setIdempotencyKey(data.getIdempotencyKey())
+                    .build();
+
+            PaymentIntent paymentIntent = PaymentIntent.create(params, options);
 
             log.info("Billing charge created: stripePaymentIntentId={}, customerId={}, subscriptionId={}, status={}",
-                    paymentIntent.getId(), customerId, subscriptionId, paymentIntent.getStatus());
+                    paymentIntent.getId(), data.getCustomerId(), data.getSubscriptionId(), paymentIntent.getStatus());
 
             return paymentIntent;
 
         } catch (StripeException e) {
             log.error("Billing charge failed: customerId={}, subscriptionId={}, error={}",
-                    customerId, subscriptionId, e.getMessage());
+                    data.getCustomerId(), data.getSubscriptionId(), e.getMessage());
             throw StripePaymentException.byCreationError(e.getMessage(), e);
         }
     }

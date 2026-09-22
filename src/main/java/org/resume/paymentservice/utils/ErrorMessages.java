@@ -37,8 +37,6 @@ public class ErrorMessages {
 
     // Webhook errors
     public static final String WEBHOOK_INVALID_SIGNATURE = "Invalid webhook signature for this event: ";
-    public static final String WEBHOOK_ALREADY_PROCESSED = "This webhook already was processed: ";
-    public static final String WEBHOOK_PROCESSING_FAILED = "Failed webhook event: ";
     public static final String WEBHOOK_DESERIALIZATION_FAILED = "Can't deserialize PaymentIntent from event: ";
     public static final String WEBHOOK_NOT_FOUND_BY_ID = "Webhook not found with id: ";
 

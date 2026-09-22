@@ -17,6 +17,12 @@ spring:
     enabled: true
     locations: classpath:db/migration
     baseline-on-migrate: true
+    placeholders:
+      admin_name: ${ADMIN_NAME}
+      admin_midname: ${ADMIN_MIDNAME}
+      admin_surname: ${ADMIN_SURNAME}
+      admin_email: ${ADMIN_EMAIL}
+      admin_password: ${ADMIN_PASSWORD}
 
 server:
   port: 8080
@@ -30,12 +36,6 @@ jwt:
   secret-key: ${JWT_SECRET_KEY}
   expiration-seconds: 86400
 
-admin:
-  name: ${ADMIN_NAME}
-  midname: ${ADMIN_MIDNAME}
-  surname: ${ADMIN_SURNAME}
-  email: ${ADMIN_EMAIL}
-  password: ${ADMIN_PASSWORD}
 
 billing:
   max-retry-count: 3

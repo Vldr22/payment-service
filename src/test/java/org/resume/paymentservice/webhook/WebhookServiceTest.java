@@ -10,15 +10,15 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.resume.paymentservice.exception.NotFoundException;
-import org.resume.paymentservice.exception.WebhookProcessingException;
 import org.resume.paymentservice.model.entity.WebhookEvent;
 import org.resume.paymentservice.repository.WebhookEventRepository;
 import org.resume.paymentservice.service.webhook.WebhookEventHandlerRegistry;
 import org.resume.paymentservice.service.webhook.WebhookService;
-import org.resume.paymentservice.service.webhook.signature.WebhookSignatureVerifier;
+import org.resume.paymentservice.service.webhook.signature.StripeSignatureVerifier;
 
 import java.util.Optional;
 
+import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -37,7 +37,7 @@ class WebhookServiceTest {
     private WebhookEventRepository webhookEventRepository;
 
     @Mock
-    private WebhookSignatureVerifier webhookSignatureVerifier;
+    private StripeSignatureVerifier stripeSignatureVerifier;
 
     @Mock
     private WebhookEventHandlerRegistry webhookEventHandlerRegistry;
@@ -51,7 +51,7 @@ class WebhookServiceTest {
     void setUp() {
         event = mock(Event.class);
         when(event.getId()).thenReturn(EVENT_ID);
-        when(webhookSignatureVerifier.verifyWebhookEventSignature(PAYLOAD, SIGNATURE_HEADER))
+        when(stripeSignatureVerifier.verifyWebhookEventSignature(PAYLOAD, SIGNATURE_HEADER))
                 .thenReturn(event);
     }
 
@@ -93,15 +93,14 @@ class WebhookServiceTest {
     // createWebhookEvent — ошибки обработки
 
     /**
-     * Если событие с таким ID уже обработано — бросаем исключение,
-     * повторная обработка не допускается.
+     * Если событие с таким ID уже обработано — выходим без ошибки и повторно не обрабатываем:
+     * ответ об ошибке заставил бы Stripe повторять доставку трое суток.
      */
     @Test
-    void shouldThrowWebhookProcessingException_whenDuplicateEvent() {
+    void shouldIgnoreDuplicateEvent_withoutReprocessing() {
         when(webhookEventRepository.existsByEventId(EVENT_ID)).thenReturn(true);
 
-        assertThatThrownBy(() -> webhookService.createWebhookEvent(PAYLOAD, SIGNATURE_HEADER))
-                .isInstanceOf(WebhookProcessingException.class);
+        assertThatNoException().isThrownBy(() -> webhookService.createWebhookEvent(PAYLOAD, SIGNATURE_HEADER));
 
         verify(webhookEventHandlerRegistry, never()).dispatch(any());
         verify(webhookEventRepository, never()).save(any());

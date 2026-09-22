@@ -1,31 +1,41 @@
 package org.resume.paymentservice.webhook.handler;
 
+import com.stripe.Stripe;
+import com.stripe.model.Event;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.resume.paymentservice.BaseIntegrationTest;
-import org.resume.paymentservice.exception.WebhookProcessingException;
 import org.resume.paymentservice.model.entity.*;
 import org.resume.paymentservice.model.enums.*;
 import org.resume.paymentservice.repository.*;
 import org.resume.paymentservice.service.webhook.WebhookService;
+import org.resume.paymentservice.service.webhook.signature.StripeSignatureVerifier;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
 import java.util.Objects;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThatNoException;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
 
 class PaymentWebhookIT extends BaseIntegrationTest {
 
     private static final String STRIPE_PAYMENT_ID = "pi_3T7PULRqnwyBFap61fkmmSCw";
-    private static final String DEV_SIGNATURE = "dev-skip-verification";
+    private static final String SIGNATURE_HEADER = "test-signature";
+    private static final String API_VERSION_PLACEHOLDER = "{API_VERSION}";
 
     @Autowired
     private WebhookService webhookService;
+
+    @MockitoBean
+    private StripeSignatureVerifier stripeSignatureVerifier;
 
     @Autowired
     private PaymentRepository paymentRepository;
@@ -53,6 +63,10 @@ class PaymentWebhookIT extends BaseIntegrationTest {
 
     @BeforeEach
     void setUp() {
+        when(stripeSignatureVerifier.verifyWebhookEventSignature(anyString(), anyString()))
+                .thenAnswer(invocation -> Event.GSON.fromJson(
+                        invocation.getArgument(0, String.class), Event.class));
+
         user = new User("Иван", "Иванов", "Иванович", "+79001234567");
         user.setRole(Roles.ROLE_USER);
         userRepository.save(user);
@@ -88,7 +102,7 @@ class PaymentWebhookIT extends BaseIntegrationTest {
     void shouldUpdatePaymentStatus_whenPaymentSucceededWebhookReceived() throws Exception {
         String payload = loadJson("stripe-events/payment_intent_succeeded.json");
 
-        webhookService.createWebhookEvent(payload, DEV_SIGNATURE);
+        webhookService.createWebhookEvent(payload, SIGNATURE_HEADER);
 
         Payment updated = paymentRepository.findByStripePaymentIntentId(STRIPE_PAYMENT_ID).orElseThrow();
         assertThat(updated.getStatus()).isEqualTo(PaymentStatus.SUCCEEDED);
@@ -107,7 +121,7 @@ class PaymentWebhookIT extends BaseIntegrationTest {
         String payload = loadJson("stripe-events/payment_intent_succeeded_billing.json")
                 .replace("{SUBSCRIPTION_ID}", String.valueOf(subscription.getId()));
 
-        webhookService.createWebhookEvent(payload, DEV_SIGNATURE);
+        webhookService.createWebhookEvent(payload, SIGNATURE_HEADER);
 
         Payment updatedPayment = paymentRepository.findByStripePaymentIntentId(STRIPE_PAYMENT_ID).orElseThrow();
         BillingAttempt updatedAttempt = billingAttemptRepository.findByStripePaymentIntentId(STRIPE_PAYMENT_ID).orElseThrow();
@@ -125,7 +139,7 @@ class PaymentWebhookIT extends BaseIntegrationTest {
     void shouldUpdatePaymentStatus_whenPaymentFailedWebhookReceived() throws Exception {
         String payload = loadJson("stripe-events/payment_intent_failed.json");
 
-        webhookService.createWebhookEvent(payload, DEV_SIGNATURE);
+        webhookService.createWebhookEvent(payload, SIGNATURE_HEADER);
 
         Payment updated = paymentRepository.findByStripePaymentIntentId(STRIPE_PAYMENT_ID).orElseThrow();
         assertThat(updated.getStatus()).isEqualTo(PaymentStatus.FAILED);
@@ -144,7 +158,7 @@ class PaymentWebhookIT extends BaseIntegrationTest {
         String payload = loadJson("stripe-events/payment_intent_failed_billing.json")
                 .replace("{SUBSCRIPTION_ID}", String.valueOf(subscription.getId()));
 
-        webhookService.createWebhookEvent(payload, DEV_SIGNATURE);
+        webhookService.createWebhookEvent(payload, SIGNATURE_HEADER);
 
         Payment updatedPayment = paymentRepository.findByStripePaymentIntentId(STRIPE_PAYMENT_ID).orElseThrow();
         BillingAttempt updatedAttempt = billingAttemptRepository.findByStripePaymentIntentId(STRIPE_PAYMENT_ID).orElseThrow();
@@ -162,7 +176,7 @@ class PaymentWebhookIT extends BaseIntegrationTest {
     void shouldUpdatePaymentStatus_whenPaymentProcessingWebhookReceived() throws Exception {
         String payload = loadJson("stripe-events/payment_intent_processing.json");
 
-        webhookService.createWebhookEvent(payload, DEV_SIGNATURE);
+        webhookService.createWebhookEvent(payload, SIGNATURE_HEADER);
 
         Payment updated = paymentRepository.findByStripePaymentIntentId(STRIPE_PAYMENT_ID).orElseThrow();
         assertThat(updated.getStatus()).isEqualTo(PaymentStatus.PROCESSING);
@@ -177,7 +191,7 @@ class PaymentWebhookIT extends BaseIntegrationTest {
     void shouldUpdatePaymentStatus_whenPaymentCanceledWebhookReceived() throws Exception {
         String payload = loadJson("stripe-events/payment_intent_canceled.json");
 
-        webhookService.createWebhookEvent(payload, DEV_SIGNATURE);
+        webhookService.createWebhookEvent(payload, SIGNATURE_HEADER);
 
         Payment updated = paymentRepository.findByStripePaymentIntentId(STRIPE_PAYMENT_ID).orElseThrow();
         assertThat(updated.getStatus()).isEqualTo(PaymentStatus.CANCELED);
@@ -186,17 +200,18 @@ class PaymentWebhookIT extends BaseIntegrationTest {
     // ===== Дубликат =====
 
     /**
-     * Повторная обработка того же события отклоняется — выбрасывается
-     * WebhookProcessingException.
+     * Повторная доставка того же события проходит без ошибки и не создаёт вторую запись:
+     * ответ об ошибке заставил бы Stripe повторять доставку трое суток.
      */
     @Test
-    void shouldRejectDuplicateWebhookEvent() throws Exception {
+    void shouldIgnoreDuplicateWebhookEvent() throws Exception {
         String payload = loadJson("stripe-events/payment_intent_succeeded.json");
 
-        webhookService.createWebhookEvent(payload, DEV_SIGNATURE);
+        webhookService.createWebhookEvent(payload, SIGNATURE_HEADER);
 
-        assertThatThrownBy(() -> webhookService.createWebhookEvent(payload, DEV_SIGNATURE))
-                .isInstanceOf(WebhookProcessingException.class);
+        assertThatNoException()
+                .isThrownBy(() -> webhookService.createWebhookEvent(payload, SIGNATURE_HEADER));
+        assertThat(webhookEventRepository.count()).isEqualTo(1);
     }
 
     // ===== Неподдерживаемый тип =====
@@ -213,7 +228,7 @@ class PaymentWebhookIT extends BaseIntegrationTest {
                 .replace("\"payment_intent.succeeded\"", unsupportedType)
                 .replace("\"evt_3T7PULRqnwyBFap61qfdBLPf\"", unsupportedEventId);
 
-        webhookService.createWebhookEvent(payload, DEV_SIGNATURE);
+        webhookService.createWebhookEvent(payload, SIGNATURE_HEADER);
 
         assertThat(webhookEventRepository.count()).isZero();
     }
@@ -233,7 +248,7 @@ class PaymentWebhookIT extends BaseIntegrationTest {
 
         String payload = loadJson("stripe-events/refund_succeeded.json");
 
-        webhookService.createWebhookEvent(payload, DEV_SIGNATURE);
+        webhookService.createWebhookEvent(payload, SIGNATURE_HEADER);
 
         Payment updatedPayment = paymentRepository.findByStripePaymentIntentId(STRIPE_PAYMENT_ID).orElseThrow();
         Refund updatedRefund = refundRepository.findByPaymentStripePaymentIntentIdAndStatus(
@@ -255,7 +270,7 @@ class PaymentWebhookIT extends BaseIntegrationTest {
 
         String payload = loadJson("stripe-events/refund_failed.json");
 
-        webhookService.createWebhookEvent(payload, DEV_SIGNATURE);
+        webhookService.createWebhookEvent(payload, SIGNATURE_HEADER);
 
         Refund updatedRefund = refundRepository.findByPaymentStripePaymentIntentIdAndStatus(
                 STRIPE_PAYMENT_ID, RefundStatus.FAILED).orElseThrow();
@@ -303,17 +318,18 @@ class PaymentWebhookIT extends BaseIntegrationTest {
      * Создаёт и сохраняет первую попытку биллинга с привязкой к тестовому payment intent.
      */
     private void buildBillingAttempt(Subscription subscription) {
-        BillingAttempt attempt = new BillingAttempt(subscription, 1);
+        BillingAttempt attempt = new BillingAttempt(subscription, 1, LocalDateTime.now());
         attempt.setStripePaymentIntentId(STRIPE_PAYMENT_ID);
         billingAttemptRepository.save(attempt);
     }
 
     /**
-     * Загружает JSON файл из src/test/resources по указанному пути.
+     * Загружает фикстуру, подставляя версию API, на которую собран SDK.
      */
     private String loadJson(String path) throws Exception {
-        return new String(Files.readAllBytes(
+        String json = new String(Files.readAllBytes(
                 Paths.get(Objects.requireNonNull(getClass().getClassLoader().getResource(path)).toURI())
         ));
+        return json.replace(API_VERSION_PLACEHOLDER, Stripe.API_VERSION);
     }
 }

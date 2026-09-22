@@ -1,6 +1,12 @@
 spring:
   flyway:
     enabled: true
+    placeholders:
+      admin_name: Test
+      admin_midname: Test
+      admin_surname: Test
+      admin_email: admin@test.com
+      admin_password: test123
 
   data:
     redis:
@@ -14,19 +20,10 @@ stripe:
   secret-key: sk_test_fake
   publishable-key: pk_test_fake
   webhook-secret: whsec_test_fake
-  webhook:
-    dev-mode: dev
 
 jwt:
   secret-key: F+PdpuUJhsbREUGv3mE0xH93Rd5weucoC5sMHkt60prV8eQsYpTGMk4awZ4XM5S7F7EfmTFroUqEyR+dyZAl1g==
   cookie-secure: false
-
-admin:
-  name: Test
-  midname: Test
-  surname: Test
-  email: admin@test.com
-  password: test123
 
 billing:
   cron: "0 0 1 1 1 ?"

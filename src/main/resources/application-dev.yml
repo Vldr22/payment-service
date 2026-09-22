@@ -13,11 +13,8 @@ spring:
       port: 6379
 
   jpa:
-    show-sql: true
+    show-sql: false
 
-stripe:
-  webhook:
-    dev-mode: prod
 
 jwt:
   cookie-secure: false

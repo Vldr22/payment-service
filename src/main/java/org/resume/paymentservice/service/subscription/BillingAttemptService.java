@@ -21,14 +21,16 @@ public class BillingAttemptService {
 
     private final BillingAttemptRepository billingAttemptRepository;
 
+    /**
+     * Возвращает попытку за период, создавая её при первом обращении.
+     * Повторный прогон после сбоя переиспользует существующую.
+     */
     @Transactional
-    public BillingAttempt createPending(Subscription subscription, int attemptNumber) {
-        BillingAttempt attempt = new BillingAttempt(subscription, attemptNumber);
-        BillingAttempt saved = billingAttemptRepository.save(attempt);
-
-        log.info("BillingAttempt created: id={}, subscriptionId={}, attempt#{}",
-                saved.getId(), subscription.getId(), attemptNumber);
-        return saved;
+    public BillingAttempt findOrCreatePending(Subscription subscription, int attemptNumber,
+                                              LocalDateTime billingPeriod) {
+        return billingAttemptRepository
+                .findBySubscriptionIdAndBillingPeriod(subscription.getId(), billingPeriod)
+                .orElseGet(() -> createPending(subscription, attemptNumber, billingPeriod));
     }
 
     @Transactional
@@ -67,6 +69,16 @@ public class BillingAttemptService {
     @Transactional
     public void save(BillingAttempt attempt) {
         billingAttemptRepository.save(attempt);
+    }
+
+    private BillingAttempt createPending(Subscription subscription, int attemptNumber,
+                                         LocalDateTime billingPeriod) {
+        BillingAttempt attempt = new BillingAttempt(subscription, attemptNumber, billingPeriod);
+        BillingAttempt saved = billingAttemptRepository.save(attempt);
+
+        log.info("BillingAttempt created: id={}, subscriptionId={}, attempt#{}, period={}",
+                saved.getId(), subscription.getId(), attemptNumber, billingPeriod);
+        return saved;
     }
 
 }

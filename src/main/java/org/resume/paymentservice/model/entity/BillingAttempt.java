@@ -38,6 +38,9 @@ public class BillingAttempt {
     private String errorMessage;
 
     @Column(nullable = false)
+    private LocalDateTime billingPeriod;
+
+    @Column(nullable = false)
     private LocalDateTime scheduledAt;
 
     @Column
@@ -59,9 +62,10 @@ public class BillingAttempt {
         createdAt = LocalDateTime.now();
     }
 
-    public BillingAttempt(Subscription subscription, int attemptNumber) {
+    public BillingAttempt(Subscription subscription, int attemptNumber, LocalDateTime billingPeriod) {
         this.subscription = subscription;
         this.attemptNumber = attemptNumber;
+        this.billingPeriod = billingPeriod;
         this.scheduledAt = LocalDateTime.now();
     }
 }
