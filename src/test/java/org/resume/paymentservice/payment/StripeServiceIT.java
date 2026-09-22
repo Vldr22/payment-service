@@ -5,6 +5,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.resume.paymentservice.BaseIntegrationTest;
 import org.resume.paymentservice.exception.StripePaymentException;
+import org.resume.paymentservice.model.dto.data.BillingChargeData;
 import org.resume.paymentservice.model.dto.data.SavedCardData;
 import org.resume.paymentservice.model.dto.request.CreatePaymentRequest;
 import org.resume.paymentservice.model.dto.response.PaymentResponse;
@@ -194,11 +195,7 @@ class StripeServiceIT extends BaseIntegrationTest {
     void shouldChargeWithSavedCard_whenStripeRespondsSuccessfully() {
         StubFactory.stubPost(PATH_PAYMENT_INTENTS, 200, "stripe/payment_intent/billing_succeeded.json");
 
-        PaymentIntent result = stripeService.chargeWithSavedCard(
-                new BigDecimal("9.99"), Currency.USD,
-                CUSTOMER_ID, PAYMENT_METHOD_ID,
-                "BASIC", 1L
-        );
+        PaymentIntent result = stripeService.chargeWithSavedCard(billingCharge());
 
         assertThat(result.getId()).isEqualTo(BILLING_INTENT_ID);
         assertThat(result.getStatus()).isEqualTo("succeeded");
@@ -211,11 +208,8 @@ class StripeServiceIT extends BaseIntegrationTest {
     void shouldThrowStripePaymentException_whenChargeWithSavedCardFails() {
         StubFactory.stubPost(PATH_PAYMENT_INTENTS, 402, "stripe/error/card_declined.json");
 
-        assertThatThrownBy(() -> stripeService.chargeWithSavedCard(
-                new BigDecimal("9.99"), Currency.USD,
-                CUSTOMER_ID, PAYMENT_METHOD_ID,
-                "BASIC", 1L
-        )).isInstanceOf(StripePaymentException.class);
+        assertThatThrownBy(() -> stripeService.chargeWithSavedCard(billingCharge()))
+                .isInstanceOf(StripePaymentException.class);
     }
 
     // ===== getPaymentStatus =====
@@ -272,5 +266,17 @@ class StripeServiceIT extends BaseIntegrationTest {
         assertThatThrownBy(() -> stripeService.confirmPayment(
                 PAYMENT_INTENT_ID, PAYMENT_METHOD_ID, "https://example.com/return"
         )).isInstanceOf(StripePaymentException.class);
+    }
+
+    private BillingChargeData billingCharge() {
+        return BillingChargeData.builder()
+                .amount(new BigDecimal("9.99"))
+                .currency(Currency.USD)
+                .customerId(CUSTOMER_ID)
+                .paymentMethodId(PAYMENT_METHOD_ID)
+                .description("BASIC")
+                .subscriptionId(1L)
+                .idempotencyKey("sub_1_2026-01-01T00:00")
+                .build();
     }
 }

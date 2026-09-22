@@ -44,20 +44,12 @@ public class PaymentService {
         return paymentRepository.save(payment);
     }
 
+    /**
+     * Сохраняет платёж по подписке, возвращая существующий, если списание уже было записано.
+     */
     public Payment saveBillingPayment(PaymentIntent paymentIntent, Subscription subscription) {
-        Payment payment = new Payment(
-                paymentIntent.getId(),
-                subscription.getAmount(),
-                subscription.getCurrency(),
-                PaymentStatus.PENDING,
-                String.format(BillingConstants.BILLING_PAYMENT_DESCRIPTION, subscription.getSubscriptionType().name()),
-                null,
-                subscription.getUser(),
-                subscription.getSavedCard()
-        );
-        log.info("Billing payment saved: stripeId={}, subscriptionId={}",
-                paymentIntent.getId(), subscription.getId());
-        return paymentRepository.save(payment);
+        return paymentRepository.findByStripePaymentIntentId(paymentIntent.getId())
+                .orElseGet(() -> createBillingPayment(paymentIntent, subscription));
     }
 
     @Transactional
@@ -97,6 +89,22 @@ public class PaymentService {
             throw new AccessDeniedException(ErrorMessages.PAYMENT_ACCESS_DENIED);
         }
         return payment;
+    }
+
+    private Payment createBillingPayment(PaymentIntent paymentIntent, Subscription subscription) {
+        Payment payment = new Payment(
+                paymentIntent.getId(),
+                subscription.getAmount(),
+                subscription.getCurrency(),
+                PaymentStatus.PENDING,
+                String.format(BillingConstants.BILLING_PAYMENT_DESCRIPTION, subscription.getSubscriptionType().name()),
+                null,
+                subscription.getUser(),
+                subscription.getSavedCard()
+        );
+        log.info("Billing payment saved: stripeId={}, subscriptionId={}",
+                paymentIntent.getId(), subscription.getId());
+        return paymentRepository.save(payment);
     }
 
 }

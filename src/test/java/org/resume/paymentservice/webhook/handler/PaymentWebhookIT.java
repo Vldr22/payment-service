@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
 import java.util.Objects;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -305,17 +306,13 @@ class PaymentWebhookIT extends BaseIntegrationTest {
      * Создаёт и сохраняет первую попытку биллинга с привязкой к тестовому payment intent.
      */
     private void buildBillingAttempt(Subscription subscription) {
-        BillingAttempt attempt = new BillingAttempt(subscription, 1);
+        BillingAttempt attempt = new BillingAttempt(subscription, 1, LocalDateTime.now());
         attempt.setStripePaymentIntentId(STRIPE_PAYMENT_ID);
         billingAttemptRepository.save(attempt);
     }
 
     /**
-     * Загружает JSON файл из src/test/resources по указанному пути.
-     */
-    /**
-     * Загружает фикстуру, подставляя версию API, на которую собран SDK:
-     * Stripe не десериализует событие чужой версии.
+     * Загружает фикстуру, подставляя версию API, на которую собран SDK.
      */
     private String loadJson(String path) throws Exception {
         String json = new String(Files.readAllBytes(
