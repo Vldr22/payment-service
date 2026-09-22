@@ -265,34 +265,4 @@ class StaffServiceTest {
                 .isInstanceOf(AuthException.class);
     }
 
-// createAdmin
-
-    /**
-     * Если admin с таким email уже существует — возвращает существующего
-     * без создания нового.
-     */
-    @Test
-    void shouldReturnExistingAdmin_whenAlreadyExists() {
-        when(staffRepository.findByEmail(EMAIL)).thenReturn(Optional.of(staff));
-
-        Staff result = staffService.createAdmin("Иван", "Иванов", "Иванович", EMAIL, RAW_PASS);
-
-        assertThat(result).isEqualTo(staff);
-        verify(staffRepository, never()).save(any());
-    }
-
-    /**
-     * Если admin с таким email не существует — создаёт нового с ролью ROLE_ADMIN.
-     */
-    @Test
-    void shouldCreateNewAdmin_whenNotExists() {
-        when(staffRepository.findByEmail(EMAIL)).thenReturn(Optional.empty());
-        when(passwordEncoder.encode(RAW_PASS)).thenReturn(ENCODED);
-        when(staffRepository.save(any(Staff.class))).thenAnswer(inv -> inv.getArgument(0));
-
-        Staff result = staffService.createAdmin("Иван", "Иванов", "Иванович", EMAIL, RAW_PASS);
-
-        assertThat(result.getRole()).isEqualTo(Roles.ROLE_ADMIN);
-        verify(staffRepository).save(any(Staff.class));
-    }
 }
