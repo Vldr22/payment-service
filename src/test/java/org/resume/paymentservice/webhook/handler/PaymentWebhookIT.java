@@ -5,7 +5,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.resume.paymentservice.BaseIntegrationTest;
-import org.resume.paymentservice.exception.WebhookProcessingException;
 import org.resume.paymentservice.model.entity.*;
 import org.resume.paymentservice.model.enums.*;
 import org.resume.paymentservice.repository.*;
@@ -19,7 +18,7 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 
 class PaymentWebhookIT extends BaseIntegrationTest {
 
@@ -189,17 +188,18 @@ class PaymentWebhookIT extends BaseIntegrationTest {
     // ===== Дубликат =====
 
     /**
-     * Повторная обработка того же события отклоняется — выбрасывается
-     * WebhookProcessingException.
+     * Повторная доставка того же события проходит без ошибки и не создаёт вторую запись:
+     * ответ об ошибке заставил бы Stripe повторять доставку трое суток.
      */
     @Test
-    void shouldRejectDuplicateWebhookEvent() throws Exception {
+    void shouldIgnoreDuplicateWebhookEvent() throws Exception {
         String payload = loadJson("stripe-events/payment_intent_succeeded.json");
 
         webhookService.createWebhookEvent(payload, DEV_SIGNATURE);
 
-        assertThatThrownBy(() -> webhookService.createWebhookEvent(payload, DEV_SIGNATURE))
-                .isInstanceOf(WebhookProcessingException.class);
+        assertThatNoException()
+                .isThrownBy(() -> webhookService.createWebhookEvent(payload, DEV_SIGNATURE));
+        assertThat(webhookEventRepository.count()).isEqualTo(1);
     }
 
     // ===== Неподдерживаемый тип =====
