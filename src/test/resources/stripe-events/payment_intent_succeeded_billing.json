@@ -1,7 +1,7 @@
 {
   "id": "evt_3T7PULRXCwyBFap61qfdBLPf",
   "object": "event",
-  "api_version": "2026-01-28.clover",
+  "api_version": "{API_VERSION}",
   "created": 1772669402,
   "data": {
     "object": {

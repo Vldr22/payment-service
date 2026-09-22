@@ -1,5 +1,6 @@
 package org.resume.paymentservice.webhook.handler;
 
+import com.stripe.Stripe;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,6 +24,7 @@ class PaymentWebhookIT extends BaseIntegrationTest {
 
     private static final String STRIPE_PAYMENT_ID = "pi_3T7PULRqnwyBFap61fkmmSCw";
     private static final String DEV_SIGNATURE = "dev-skip-verification";
+    private static final String API_VERSION_PLACEHOLDER = "{API_VERSION}";
 
     @Autowired
     private WebhookService webhookService;
@@ -311,9 +313,14 @@ class PaymentWebhookIT extends BaseIntegrationTest {
     /**
      * Загружает JSON файл из src/test/resources по указанному пути.
      */
+    /**
+     * Загружает фикстуру, подставляя версию API, на которую собран SDK:
+     * Stripe не десериализует событие чужой версии.
+     */
     private String loadJson(String path) throws Exception {
-        return new String(Files.readAllBytes(
+        String json = new String(Files.readAllBytes(
                 Paths.get(Objects.requireNonNull(getClass().getClassLoader().getResource(path)).toURI())
         ));
+        return json.replace(API_VERSION_PLACEHOLDER, Stripe.API_VERSION);
     }
 }
