@@ -14,7 +14,7 @@ import org.resume.paymentservice.model.entity.WebhookEvent;
 import org.resume.paymentservice.repository.WebhookEventRepository;
 import org.resume.paymentservice.service.webhook.WebhookEventHandlerRegistry;
 import org.resume.paymentservice.service.webhook.WebhookService;
-import org.resume.paymentservice.service.webhook.signature.WebhookSignatureVerifier;
+import org.resume.paymentservice.service.webhook.signature.StripeSignatureVerifier;
 
 import java.util.Optional;
 
@@ -37,7 +37,7 @@ class WebhookServiceTest {
     private WebhookEventRepository webhookEventRepository;
 
     @Mock
-    private WebhookSignatureVerifier webhookSignatureVerifier;
+    private StripeSignatureVerifier stripeSignatureVerifier;
 
     @Mock
     private WebhookEventHandlerRegistry webhookEventHandlerRegistry;
@@ -51,7 +51,7 @@ class WebhookServiceTest {
     void setUp() {
         event = mock(Event.class);
         when(event.getId()).thenReturn(EVENT_ID);
-        when(webhookSignatureVerifier.verifyWebhookEventSignature(PAYLOAD, SIGNATURE_HEADER))
+        when(stripeSignatureVerifier.verifyWebhookEventSignature(PAYLOAD, SIGNATURE_HEADER))
                 .thenReturn(event);
     }
 

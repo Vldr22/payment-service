@@ -7,7 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.resume.paymentservice.exception.NotFoundException;
 import org.resume.paymentservice.model.entity.WebhookEvent;
 import org.resume.paymentservice.repository.WebhookEventRepository;
-import org.resume.paymentservice.service.webhook.signature.WebhookSignatureVerifier;
+import org.resume.paymentservice.service.webhook.signature.StripeSignatureVerifier;
 import org.springframework.stereotype.Service;
 import com.stripe.model.Event;
 
@@ -19,7 +19,7 @@ import static org.resume.paymentservice.utils.StripeEventTypes.SUPPORTED_EVENT_T
 public class WebhookService {
 
     private final WebhookEventRepository webhookEventRepository;
-    private final WebhookSignatureVerifier webhookSignatureVerifier;
+    private final StripeSignatureVerifier stripeSignatureVerifier;
     private final WebhookEventHandlerRegistry webhookEventHandlerRegistry;
 
     /**
@@ -29,7 +29,7 @@ public class WebhookService {
      */
     @Transactional
     public void createWebhookEvent(String payload, String signatureHeader) {
-        Event event = webhookSignatureVerifier.verifyWebhookEventSignature(payload, signatureHeader);
+        Event event = stripeSignatureVerifier.verifyWebhookEventSignature(payload, signatureHeader);
 
         if (isAlreadyProcessed(event.getId())) {
             return;
