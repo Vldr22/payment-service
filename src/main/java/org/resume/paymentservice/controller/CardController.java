@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.resume.paymentservice.contants.ApiPaths;
 import org.resume.paymentservice.model.dto.CommonResponse;
 import org.resume.paymentservice.model.dto.request.AddCardRequest;
 import org.resume.paymentservice.model.dto.response.SavedCardResponse;
@@ -18,7 +19,7 @@ import java.util.List;
 @Tag(name = "Cards")
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/cards")
+@RequestMapping(ApiPaths.API_V1 + "/cards")
 public class CardController {
 
     private final CardFacadeService cardFacadeService;

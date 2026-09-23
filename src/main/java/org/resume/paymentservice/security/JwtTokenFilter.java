@@ -15,6 +15,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -29,6 +30,8 @@ import static org.resume.paymentservice.utils.ErrorMessages.*;
 @RequiredArgsConstructor
 public class JwtTokenFilter extends OncePerRequestFilter {
 
+    private static final AntPathMatcher PATH_MATCHER = new AntPathMatcher();
+
     private final JwtService jwtService;
     private final JwtBlacklistService jwtBlacklistService;
     private final JwtCookeService jwtCookeService;
@@ -37,7 +40,7 @@ public class JwtTokenFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String uri = request.getRequestURI();
-        return Arrays.stream(PUBLIC_PATHS).anyMatch(uri::startsWith);
+        return Arrays.stream(PUBLIC_PATHS).anyMatch(pattern -> PATH_MATCHER.match(pattern, uri));
     }
 
     @Override
@@ -61,8 +64,8 @@ public class JwtTokenFilter extends OncePerRequestFilter {
             }
 
             String subject = jwtService.extractSubject(token);
-            String role = jwtService.extractRole(token).name();
-            setAuthentication(subject, role);
+            String authority = jwtService.extractRole(token).getAuthority();
+            setAuthentication(subject, authority);
 
         } catch (ExpiredJwtException e) {
             sendError(response, TOKEN_EXPIRED);
@@ -77,15 +80,15 @@ public class JwtTokenFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    private void setAuthentication(String subject, String role) {
+    private void setAuthentication(String subject, String authority) {
         UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(
                         subject,
                         null,
-                        Collections.singletonList(new SimpleGrantedAuthority(role))
+                        Collections.singletonList(new SimpleGrantedAuthority(authority))
                 );
         SecurityContextHolder.getContext().setAuthentication(authentication);
-        log.debug("Authenticated: subject={}, role={}", subject, role);
+        log.debug("Authenticated: subject={}, authority={}", subject, authority);
     }
 
     private void sendError(HttpServletResponse response, String message) throws IOException {

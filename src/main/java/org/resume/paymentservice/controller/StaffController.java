@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.resume.paymentservice.contants.ApiPaths;
 import org.resume.paymentservice.model.dto.CommonResponse;
 import org.resume.paymentservice.model.dto.request.ChangePasswordRequest;
 import org.resume.paymentservice.service.facade.AuthFacadeService;
@@ -13,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "Staff")
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/staff")
+@RequestMapping(ApiPaths.API_V1 + "/staff")
 public class StaffController {
 
     private final AuthFacadeService authFacadeService;

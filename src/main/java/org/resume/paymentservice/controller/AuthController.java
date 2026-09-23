@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.resume.paymentservice.contants.ApiPaths;
 import org.resume.paymentservice.model.dto.CommonResponse;
 import org.resume.paymentservice.model.dto.request.*;
 import org.resume.paymentservice.model.dto.response.ClientResponse;
@@ -21,7 +22,7 @@ import static org.resume.paymentservice.contants.SecurityConstants.COOKIE_NAME;
 @Tag(name = "Auth")
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/auth")
+@RequestMapping(ApiPaths.API_V1 + "/auth")
 public class AuthController {
 
     private final AuthFacadeService authFacadeService;

@@ -15,7 +15,7 @@ public class PaymentServiceApplication {
     }
 
     /*
-    stripe listen --forward-to localhost:8080/api/webhooks/stripe
+    stripe listen --forward-to localhost:8080/api/v1/webhooks/stripe
 
     pm_card_visa                            — Visa, успех
     pm_card_mastercard                      — Mastercard, успех
