@@ -13,6 +13,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import static org.resume.paymentservice.contants.ApiPaths.API_V1;
+import static org.resume.paymentservice.contants.SecurityConstants.*;
+import static org.resume.paymentservice.model.enums.Roles.*;
+
 @Configuration
 @RequiredArgsConstructor
 public class SecurityConfig {
@@ -27,15 +31,14 @@ public class SecurityConfig {
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/webhooks/**").permitAll()
-                        .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
-                        .requestMatchers("/api/payments/**").hasRole("USER")
-                        .requestMatchers("/api/cards/**").hasRole("USER")
-                        .requestMatchers("/api/subscriptions/**").hasRole("USER")
-                        .requestMatchers("/api/support/**").hasRole("EMPLOYEE")
-                        .requestMatchers("/api/staff/**").hasAnyRole("EMPLOYEE", "ADMIN")
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers(PUBLIC_PATHS).permitAll()
+                        .requestMatchers(API_V1 + "/payments/**").hasAuthority(ROLE_USER.getAuthority())
+                        .requestMatchers(API_V1 + "/cards/**").hasAuthority(ROLE_USER.getAuthority())
+                        .requestMatchers(API_V1 + "/subscriptions/**").hasAuthority(ROLE_USER.getAuthority())
+                        .requestMatchers(API_V1 + "/support/**").hasAuthority(ROLE_EMPLOYEE.getAuthority())
+                        .requestMatchers(API_V1 + "/staff/**")
+                        .hasAnyAuthority(ROLE_EMPLOYEE.getAuthority(), ROLE_ADMIN.getAuthority())
+                        .requestMatchers(API_V1 + "/admin/**").hasAuthority(ROLE_ADMIN.getAuthority())
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class)

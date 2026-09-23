@@ -13,8 +13,9 @@ spring:
       port: 6379
 
   jpa:
-    show-sql: false
-
+    properties:
+      hibernate:
+        format_sql: true
 
 jwt:
   cookie-secure: false
@@ -26,3 +27,8 @@ billing:
 
 verification:
   lockout-minutes: 1
+
+springdoc:
+  swagger-ui:
+    display-request-duration: true
+    try-it-out-enabled: true

@@ -6,7 +6,7 @@ ALTER TABLE subscriptions
 
 ALTER TABLE subscriptions
     ADD COLUMN subscription_status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE';
-COMMENT ON COLUMN subscriptions.subscription_status IS 'Статус подписки: ACTIVE — активна; PAST_DUE — платёж просрочен, идут retry; SUSPENDED — retry исчерпаны; CANCELLED — отменена';
+COMMENT ON COLUMN subscriptions.subscription_status IS 'Статус подписки: ACTIVE - активна; PAST_DUE - платёж просрочен, идут retry; SUSPENDED - retry исчерпаны; CANCELLED - отменена';
 
 ALTER TABLE subscriptions
     ADD COLUMN next_billing_date TIMESTAMP NOT NULL DEFAULT NOW();
@@ -24,10 +24,10 @@ ALTER TABLE subscriptions
     ADD COLUMN interval_days INT NOT NULL DEFAULT 30;
 COMMENT ON COLUMN subscriptions.interval_days IS 'Период подписки в днях; после успешного списания next_billing_date сдвигается на interval_days вперёд';
 
--- Подписка без привязанной карты невозможна — автосписание требует сохранённого Stripe PaymentMethod
+-- Подписка без привязанной карты невозможна - автосписание требует сохранённого Stripe PaymentMethod
 ALTER TABLE subscriptions
     ALTER COLUMN saved_card_id SET NOT NULL;
-COMMENT ON COLUMN subscriptions.saved_card_id IS 'Карта для автосписания; NOT NULL — подписка без привязанной карты невозможна';
+COMMENT ON COLUMN subscriptions.saved_card_id IS 'Карта для автосписания; NOT NULL - подписка без привязанной карты невозможна';
 
 -- Billing job: WHERE next_billing_date <= NOW() AND subscription_status IN ('ACTIVE', 'PAST_DUE')
 CREATE INDEX idx_subscriptions_billing

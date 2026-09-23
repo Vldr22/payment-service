@@ -1,6 +1,7 @@
 package org.resume.paymentservice.model.entity;
 
 import jakarta.persistence.*;
+import org.resume.paymentservice.utils.BigDecimalToLongConverter;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -16,11 +17,7 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "refunds", indexes = {
-        @Index(name = "idx_refund_payment_id", columnList = "payment_id"),
-        @Index(name = "idx_refund_status", columnList = "status"),
-        @Index(name = "idx_refund_user_id", columnList = "user_id")
-})
+@Table(name = "refunds")
 public class Refund {
 
     @Id
@@ -30,7 +27,8 @@ public class Refund {
     @Column(length = 100, unique = true)
     private String stripeRefundId;
 
-    @Column(nullable = false, precision = 15, scale = 2)
+    @Column(nullable = false)
+    @Convert(converter = BigDecimalToLongConverter.class)
     private BigDecimal amount;
 
     @Enumerated(EnumType.STRING)

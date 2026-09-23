@@ -13,10 +13,10 @@ public class SecurityConstants {
     public static final String MSG_ACCESS_DENIED = "Access denied";
 
     public static final String[] PUBLIC_PATHS = {
-            "/api/auth/",
-            "/api/webhooks/",
-            "/swagger-ui",
-            "/v3/api-docs"
+            ApiPaths.API_V1 + "/auth/**",
+            ApiPaths.API_V1 + "/webhooks/**",
+            "/swagger-ui/**",
+            "/swagger-ui.html",
+            "/v3/api-docs/**"
     };
-
 }

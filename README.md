@@ -60,46 +60,46 @@
 
 | Метод | Путь | Описание |
 |---|---|---|
-| POST | `/api/auth/register-client` | Регистрация клиента |
-| POST | `/api/auth/sms/send` | Отправка кода подтверждения |
-| POST | `/api/auth/sms/verify-client` | Вход клиента по коду |
-| POST | `/api/auth/staff/login` | Вход сотрудника |
-| PATCH | `/api/auth/staff/set-password` | Установка первичного пароля |
-| POST | `/api/auth/logout` | Выход, токен в blacklist |
+| POST | `/api/v1/auth/register-client` | Регистрация клиента |
+| POST | `/api/v1/auth/sms/send` | Отправка кода подтверждения |
+| POST | `/api/v1/auth/sms/verify-client` | Вход клиента по коду |
+| POST | `/api/v1/auth/staff/login` | Вход сотрудника |
+| PATCH | `/api/v1/auth/staff/set-password` | Установка первичного пароля |
+| POST | `/api/v1/auth/logout` | Выход, токен в blacklist |
 
 **Клиент** (`ROLE_USER`)
 
 | Метод | Путь | Описание |
 |---|---|---|
-| POST | `/api/payments` | Создание платежа |
-| POST | `/api/payments/{id}/confirm` | Подтверждение новой картой |
-| POST | `/api/payments/{id}/confirm/saved-card` | Подтверждение сохранённой картой |
-| GET | `/api/payments/{id}` | Статус платежа |
-| POST | `/api/payments/{id}/refund` | Заявка на возврат |
-| POST | `/api/cards` | Привязка карты |
-| GET | `/api/cards` | Список карт |
-| PATCH | `/api/cards/{id}/default` | Карта по умолчанию |
-| DELETE | `/api/cards/{id}` | Удаление карты |
-| POST | `/api/subscriptions` | Оформление подписки |
-| GET | `/api/subscriptions` | Текущая подписка |
-| PATCH | `/api/subscriptions/cancel` | Отмена подписки |
-| GET | `/api/subscriptions/billing-history` | История списаний |
+| POST | `/api/v1/payments` | Создание платежа |
+| POST | `/api/v1/payments/{id}/confirm` | Подтверждение новой картой |
+| POST | `/api/v1/payments/{id}/confirm/saved-card` | Подтверждение сохранённой картой |
+| GET | `/api/v1/payments/{id}` | Статус платежа |
+| POST | `/api/v1/payments/{id}/refund` | Заявка на возврат |
+| POST | `/api/v1/cards` | Привязка карты |
+| GET | `/api/v1/cards` | Список карт |
+| PATCH | `/api/v1/cards/{id}/default` | Карта по умолчанию |
+| DELETE | `/api/v1/cards/{id}` | Удаление карты |
+| POST | `/api/v1/subscriptions` | Оформление подписки |
+| GET | `/api/v1/subscriptions` | Текущая подписка |
+| PATCH | `/api/v1/subscriptions/cancel` | Отмена подписки |
+| GET | `/api/v1/subscriptions/billing-history` | История списаний |
 
 **Поддержка и администрирование**
 
 | Метод | Путь | Доступ | Описание |
 |---|---|---|---|
-| GET | `/api/support/refunds/pending` | `ROLE_EMPLOYEE` | Заявки на возврат |
-| POST | `/api/support/refunds/{id}/approve` | `ROLE_EMPLOYEE` | Одобрить возврат |
-| POST | `/api/support/refunds/{id}/reject` | `ROLE_EMPLOYEE` | Отклонить возврат |
-| PATCH | `/api/staff/password` | `ROLE_EMPLOYEE`, `ROLE_ADMIN` | Смена пароля сотрудника |
-| POST | `/api/admin/register-employee` | `ROLE_ADMIN` | Создание сотрудника |
+| GET | `/api/v1/support/refunds/pending` | `ROLE_EMPLOYEE` | Заявки на возврат |
+| POST | `/api/v1/support/refunds/{id}/approve` | `ROLE_EMPLOYEE` | Одобрить возврат |
+| POST | `/api/v1/support/refunds/{id}/reject` | `ROLE_EMPLOYEE` | Отклонить возврат |
+| PATCH | `/api/v1/staff/password` | `ROLE_EMPLOYEE`, `ROLE_ADMIN` | Смена пароля сотрудника |
+| POST | `/api/v1/admin/register-employee` | `ROLE_ADMIN` | Создание сотрудника |
 
 **Webhook**
 
 | Метод | Путь | Описание |
 |---|---|---|
-| POST | `/api/webhooks/stripe` | Приём событий Stripe |
+| POST | `/api/v1/webhooks/stripe` | Приём событий Stripe |
 
 ## Тестирование
 
@@ -119,7 +119,7 @@
 git clone https://github.com/Vldr22/payment-service.git
 cd payment-service
 cp .env.example .env
-docker compose up --build
+docker compose -f docker-compose.dev.yml up --build
 ```
 
 Ключи Stripe берутся из тестового режима. Администратор создаётся миграцией из переменных
@@ -130,7 +130,7 @@ docker compose up --build
 Для webhook нужен локальный слушатель, его секрет идёт в `STRIPE_WEBHOOK_SECRET`:
 
 ```bash
-stripe listen --all-snapshot --forward-to localhost:8080/api/webhooks/stripe
+stripe listen --all-snapshot --forward-to localhost:8080/api/v1/webhooks/stripe
 ```
 
 ## Roadmap

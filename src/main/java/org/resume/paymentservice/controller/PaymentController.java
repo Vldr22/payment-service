@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.resume.paymentservice.contants.ApiPaths;
 import org.resume.paymentservice.model.dto.CommonResponse;
 import org.resume.paymentservice.model.dto.request.ConfirmPaymentRequest;
 import org.resume.paymentservice.model.dto.request.ConfirmWithSavedCardRequest;
@@ -19,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "Payments")
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/payments")
+@RequestMapping(ApiPaths.API_V1 + "/payments")
 public class PaymentController {
 
     private final PaymentFacadeService paymentFacadeService;
@@ -32,8 +33,8 @@ public class PaymentController {
             @Valid @RequestBody CreatePaymentRequest createPaymentRequest
     ) {
 
-      PaymentResponse paymentResponse = paymentFacadeService.createPayment(createPaymentRequest);
-      return CommonResponse.success(paymentResponse);
+        PaymentResponse paymentResponse = paymentFacadeService.createPayment(createPaymentRequest);
+        return CommonResponse.success(paymentResponse);
     }
 
     @Operation(summary = "Подтверждение платежа новой картой",

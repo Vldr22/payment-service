@@ -5,17 +5,15 @@ import jakarta.persistence.Converter;
 
 import java.math.BigDecimal;
 
-@Converter(autoApply = true)
+@Converter
 public class BigDecimalToLongConverter implements AttributeConverter<BigDecimal, Long> {
-
-    private static final int SCALE = 2;
 
     @Override
     public Long convertToDatabaseColumn(BigDecimal amount) {
         if (amount == null) {
             return null;
         }
-        return amount.movePointRight(SCALE).longValueExact();
+        return MoneyUtils.toMinorUnits(amount);
     }
 
     @Override
@@ -23,6 +21,7 @@ public class BigDecimalToLongConverter implements AttributeConverter<BigDecimal,
         if (dbData == null) {
             return null;
         }
-        return BigDecimal.valueOf(dbData).movePointLeft(SCALE);
+        return MoneyUtils.toMajorUnits(dbData);
     }
+
 }

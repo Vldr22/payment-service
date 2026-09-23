@@ -13,9 +13,6 @@ spring:
       host: localhost
       port: 6379
 
-  jpa:
-    show-sql: true
-
 stripe:
   secret-key: sk_test_fake
   publishable-key: pk_test_fake

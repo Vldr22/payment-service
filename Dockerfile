@@ -6,10 +6,10 @@ COPY pom.xml .
 COPY .mvn .mvn
 COPY mvnw .
 RUN sed -i 's/\r$//' mvnw && chmod +x mvnw
-RUN ./mvnw dependency:go-offline -q
+RUN --mount=type=cache,target=/root/.m2 ./mvnw dependency:go-offline -q
 
 COPY src ./src
-RUN ./mvnw package -DskipTests -q
+RUN --mount=type=cache,target=/root/.m2 ./mvnw package -DskipTests -q
 
 
 FROM eclipse-temurin:21-jre

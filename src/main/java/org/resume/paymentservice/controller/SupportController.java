@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.resume.paymentservice.contants.ApiPaths;
 import org.resume.paymentservice.model.dto.CommonResponse;
 import org.resume.paymentservice.model.dto.response.RefundDetailResponse;
 import org.resume.paymentservice.service.facade.SupportFacadeService;
@@ -15,7 +16,7 @@ import java.util.List;
 @Tag(name = "Support")
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/support")
+@RequestMapping(ApiPaths.API_V1 + "/support")
 public class SupportController {
 
     private final SupportFacadeService supportFacadeService;

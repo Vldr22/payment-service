@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.resume.paymentservice.contants.ApiPaths;
 import org.resume.paymentservice.model.dto.CommonResponse;
 import org.resume.paymentservice.model.dto.request.CreateSubscriptionRequest;
 import org.resume.paymentservice.model.dto.response.BillingAttemptResponse;
@@ -18,7 +19,7 @@ import java.util.List;
 @Tag(name = "Subscriptions")
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/subscriptions")
+@RequestMapping(ApiPaths.API_V1 + "/subscriptions")
 public class SubscriptionController {
 
     private final SubscriptionFacadeService subscriptionFacadeService;

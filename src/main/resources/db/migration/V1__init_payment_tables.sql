@@ -1,3 +1,5 @@
+-- V1: Базовые таблицы пользователей, платежей и возвратов
+
 CREATE TABLE users
 (
     id          BIGSERIAL PRIMARY KEY,
