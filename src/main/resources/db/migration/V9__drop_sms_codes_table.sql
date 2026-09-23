@@ -3,6 +3,4 @@
 DROP TABLE IF EXISTS sms_codes;
 
 COMMENT ON COLUMN subscriptions.subscription_status IS
-    'Статус подписки: ACTIVE — активна; PAST_DUE — платёж просрочен, идут retry;
-     PROCESSING — PaymentIntent создан, ожидаем webhook;
-     SUSPENDED — retry исчерпаны; CANCELLED — отменена';
+    'ACTIVE; PAST_DUE - идут retry; PROCESSING - ждём webhook; SUSPENDED - retry исчерпаны; CANCELLED';

@@ -1,10 +1,10 @@
 -- V4: Разделение таблицы users на users (клиенты) и staff (сотрудники/админы)
--- Клиенты логинятся по телефону, staff (сотрудники) — по email + password
+-- Клиенты логинятся по телефону, staff (сотрудники) - по email + password
 
 -- 1. Создание таблицы staff
 CREATE TABLE staff
 (
-    id                       BIGSERIAL    PRIMARY KEY,
+    id                       BIGSERIAL PRIMARY KEY,
     name                     VARCHAR(50)  NOT NULL,
     surname                  VARCHAR(50)  NOT NULL,
     midname                  VARCHAR(50),
@@ -19,18 +19,27 @@ CREATE TABLE staff
 );
 
 COMMENT ON TABLE staff IS 'Внутренние пользователи системы: сотрудники поддержки и администраторы; логин по email + password';
-COMMENT ON COLUMN staff.password_change_required IS 'TRUE при создании админом — сотрудник обязан сменить временный пароль при первом входе';
+COMMENT ON COLUMN staff.password_change_required IS 'TRUE при создании админом - сотрудник обязан сменить временный пароль при первом входе';
 COMMENT ON COLUMN staff.role IS 'Роль: ROLE_EMPLOYEE (поддержка), ROLE_ADMIN (администратор)';
 
 -- 2. Перенос сотрудников и админов из users в employees
 INSERT INTO staff (id, name, surname, midname, email, password, role, user_status, password_change_required, created_at)
-SELECT id, name, surname, midname, email, password, role, user_status, FALSE, created_at
+SELECT id,
+       name,
+       surname,
+       midname,
+       email,
+       password,
+       role,
+       user_status,
+       FALSE,
+       created_at
 FROM users
 WHERE role IN ('ROLE_EMPLOYEE', 'ROLE_ADMIN');
 
 COMMENT ON TABLE staff IS 'Данные перенесены из таблицы users (role IN ROLE_EMPLOYEE, ROLE_ADMIN)';
 
--- 3. Обновление FK в refunds.reviewed_by: users → staff
+-- 3. Обновление FK в refunds.reviewed_by: users -> staff
 ALTER TABLE refunds
     DROP CONSTRAINT IF EXISTS refunds_reviewed_by_fkey;
 
@@ -44,11 +53,15 @@ COMMENT ON COLUMN refunds.reviewed_by IS 'Сотрудник, одобривши
 SELECT setval('staff_id_seq', (SELECT MAX(id) FROM staff));
 
 -- 5. Удаление сотрудников из таблицы users
-DELETE FROM users WHERE role IN ('ROLE_EMPLOYEE', 'ROLE_ADMIN');
+DELETE
+FROM users
+WHERE role IN ('ROLE_EMPLOYEE', 'ROLE_ADMIN');
 
 -- 6. Очистка users от employee-специфичных колонок
-ALTER TABLE users DROP COLUMN email;
-ALTER TABLE users DROP COLUMN password;
+ALTER TABLE users
+    DROP COLUMN email;
+ALTER TABLE users
+    DROP COLUMN password;
 
 COMMENT ON TABLE users IS 'Клиенты системы; логин по номеру телефона через SMS-код';
 COMMENT ON COLUMN users.role IS 'Всегда ROLE_USER для клиентов';

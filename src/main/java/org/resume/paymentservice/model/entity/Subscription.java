@@ -1,6 +1,7 @@
 package org.resume.paymentservice.model.entity;
 
 import jakarta.persistence.*;
+import org.resume.paymentservice.utils.BigDecimalToLongConverter;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -31,7 +32,8 @@ public class Subscription {
     @Column(length = 20, nullable = false)
     private SubscriptionStatus subscriptionStatus = SubscriptionStatus.ACTIVE;
 
-    @Column(nullable = false, precision = 15, scale = 2)
+    @Column(nullable = false)
+    @Convert(converter = BigDecimalToLongConverter.class)
     private BigDecimal amount;
 
     @Enumerated(EnumType.STRING)

@@ -1,4 +1,4 @@
--- Обновление таблицы refunds для поддержки flow возврата с одобрением сотрудником
+-- V2: Возврат с одобрением сотрудником
 
 ALTER TABLE refunds
     ALTER COLUMN stripe_refund_id DROP NOT NULL;
@@ -21,7 +21,7 @@ ALTER TABLE refunds
 
 ALTER TABLE refunds
     ADD CONSTRAINT chk_refund_status CHECK (status IN ('PENDING', 'APPROVED', 'REJECTED', 'SUCCEEDED', 'FAILED'));
-COMMENT ON COLUMN refunds.status IS 'Статус возврата: PENDING → APPROVED/REJECTED → SUCCEEDED/FAILED';
+COMMENT ON COLUMN refunds.status IS 'Статус возврата: PENDING -> APPROVED/REJECTED -> SUCCEEDED/FAILED';
 
 ALTER TABLE payments
     DROP CONSTRAINT chk_payment_status;

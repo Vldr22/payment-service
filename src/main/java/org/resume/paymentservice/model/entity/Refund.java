@@ -1,6 +1,7 @@
 package org.resume.paymentservice.model.entity;
 
 import jakarta.persistence.*;
+import org.resume.paymentservice.utils.BigDecimalToLongConverter;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -30,7 +31,8 @@ public class Refund {
     @Column(length = 100, unique = true)
     private String stripeRefundId;
 
-    @Column(nullable = false, precision = 15, scale = 2)
+    @Column(nullable = false)
+    @Convert(converter = BigDecimalToLongConverter.class)
     private BigDecimal amount;
 
     @Enumerated(EnumType.STRING)

@@ -1,10 +1,12 @@
+-- V3: Токенизация карт по PCI DSS, номера карт не хранятся
+
 ALTER TABLE users
     ADD COLUMN stripe_customer_id VARCHAR(100) UNIQUE;
 COMMENT ON COLUMN users.stripe_customer_id IS 'Stripe Customer ID (cus_xxx), создаётся при первой привязке карты пользователем';
 
 CREATE TABLE saved_cards
 (
-    id                       BIGSERIAL    PRIMARY KEY,
+    id                       BIGSERIAL PRIMARY KEY,
     stripe_payment_method_id VARCHAR(100) NOT NULL UNIQUE,
     last4                    VARCHAR(4)   NOT NULL,
     brand                    VARCHAR(20)  NOT NULL,

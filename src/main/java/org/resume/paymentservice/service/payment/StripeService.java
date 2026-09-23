@@ -15,9 +15,8 @@ import org.resume.paymentservice.model.dto.data.SavedCardData;
 import org.resume.paymentservice.model.dto.request.CreatePaymentRequest;
 import org.resume.paymentservice.model.dto.response.PaymentResponse;
 import org.resume.paymentservice.model.enums.RefundReason;
+import org.resume.paymentservice.utils.MoneyUtils;
 import org.springframework.stereotype.Service;
-
-import java.math.BigDecimal;
 
 @Slf4j
 @Service
@@ -25,7 +24,7 @@ public class StripeService {
 
     public PaymentResponse createStripePayment(CreatePaymentRequest request, String customerId) {
         try {
-            long amountInCents = convertToCents(request.amount());
+            long amountInCents = MoneyUtils.toMinorUnits(request.amount());
 
             PaymentIntentCreateParams.Builder builder = PaymentIntentCreateParams.builder()
                     .setAmount(amountInCents)
@@ -81,7 +80,7 @@ public class StripeService {
      */
     public PaymentIntent chargeWithSavedCard(BillingChargeData data) {
         try {
-            long amountInCents = convertToCents(data.getAmount());
+            long amountInCents = MoneyUtils.toMinorUnits(data.getAmount());
 
             PaymentIntentCreateParams params = PaymentIntentCreateParams.builder()
                     .setAmount(amountInCents)
@@ -226,9 +225,5 @@ public class StripeService {
                 .build();
     }
 
-
-    private long convertToCents(BigDecimal amount) {
-        return amount.multiply(BigDecimal.valueOf(100)).longValue();
-    }
 
 }
