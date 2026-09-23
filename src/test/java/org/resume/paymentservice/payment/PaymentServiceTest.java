@@ -226,6 +226,47 @@ class PaymentServiceTest {
         verify(paymentRepository, never()).save(any());
     }
 
+    /**
+     * Проверяет, что опоздавшее событие processing не откатывает успешный платёж.
+     */
+    @Test
+    void shouldSkipSave_whenTransitionNotAllowed() {
+        payment = Instancio.of(Payment.class)
+                .set(field(Payment::getUser), owner)
+                .set(field(Payment::getStripePaymentIntentId), EXISTING_STRIPE_ID)
+                .set(field(Payment::getStatus), PaymentStatus.SUCCEEDED)
+                .create();
+
+        when(paymentRepository.findByStripePaymentIntentId(EXISTING_STRIPE_ID))
+                .thenReturn(Optional.of(payment));
+
+        paymentService.updatePaymentStatus(EXISTING_STRIPE_ID, PaymentStatus.PROCESSING);
+
+        assertThat(payment.getStatus()).isEqualTo(PaymentStatus.SUCCEEDED);
+        verify(paymentRepository, never()).save(any());
+    }
+
+    /**
+     * Проверяет, что возвращённый платёж не становится успешным повторно:
+     * PaymentIntent в Stripe после возврата остаётся succeeded.
+     */
+    @Test
+    void shouldSkipSave_whenPaymentRefunded() {
+        payment = Instancio.of(Payment.class)
+                .set(field(Payment::getUser), owner)
+                .set(field(Payment::getStripePaymentIntentId), EXISTING_STRIPE_ID)
+                .set(field(Payment::getStatus), PaymentStatus.REFUNDED)
+                .create();
+
+        when(paymentRepository.findByStripePaymentIntentId(EXISTING_STRIPE_ID))
+                .thenReturn(Optional.of(payment));
+
+        paymentService.updatePaymentStatus(EXISTING_STRIPE_ID, PaymentStatus.SUCCEEDED);
+
+        assertThat(payment.getStatus()).isEqualTo(PaymentStatus.REFUNDED);
+        verify(paymentRepository, never()).save(any());
+    }
+
     // updateSavedCard
 
     /**

@@ -236,24 +236,4 @@ class PaymentFacadeServiceTest {
         verify(paymentService).updatePaymentStatus(STRIPE_PAYMENT_ID, PaymentStatus.SUCCEEDED);
     }
 
-    /**
-     * Если статус в БД уже совпадает со Stripe, — лишнего обновления не происходит.
-     */
-    @Test
-    void shouldSkipStatusUpdate_whenStatusAlreadyMatches() {
-        payment = Instancio.of(Payment.class)
-                .set(field(Payment::getUser), currentUser)
-                .set(field(Payment::getStripePaymentIntentId), STRIPE_PAYMENT_ID)
-                .set(field(Payment::getStatus), PaymentStatus.SUCCEEDED)
-                .create();
-
-        when(userService.getCurrentUser()).thenReturn(currentUser);
-        when(paymentService.findByStripePaymentIntentIdAndUser(STRIPE_PAYMENT_ID, currentUser))
-                .thenReturn(payment);
-        when(stripeService.getPaymentStatus(STRIPE_PAYMENT_ID)).thenReturn(stripeSuccessResponse);
-
-        paymentFacadeService.getPaymentStatus(STRIPE_PAYMENT_ID);
-
-        verify(paymentService, never()).updatePaymentStatus(any(), any());
-    }
 }

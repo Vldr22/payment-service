@@ -17,4 +17,19 @@ public enum PaymentStatus {
             default -> PaymentStatus.FAILED;
         };
     }
+
+    /**
+     * Проверяет, допустим ли переход в целевой статус.
+     */
+    public boolean isPossibleTransitionTo(PaymentStatus target) {
+        if (target == this) {
+            return false;
+        }
+
+        return switch (this) {
+            case PENDING, PROCESSING, FAILED -> target != REFUNDED;
+            case SUCCEEDED -> target == REFUNDED;
+            case CANCELED, REFUNDED -> false;
+        };
+    }
 }

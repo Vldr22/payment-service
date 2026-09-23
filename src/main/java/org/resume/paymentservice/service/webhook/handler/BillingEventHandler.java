@@ -29,7 +29,7 @@ public class BillingEventHandler {
         BillingAttempt attempt = billingAttemptService.findByStripePaymentIntentId(stripePaymentIntentId);
         Payment payment = paymentService.findByStripePaymentIntentId(stripePaymentIntentId);
 
-        paymentService.updatePaymentStatus(stripePaymentIntentId, PaymentStatus.SUCCEEDED);  // ← добавить
+        paymentService.updatePaymentStatus(stripePaymentIntentId, PaymentStatus.SUCCEEDED);
         billingAttemptService.markSucceeded(attempt, payment, stripePaymentIntentId);
         subscriptionService.markSucceeded(subscription, payment);
     }
