@@ -9,14 +9,13 @@ spring:
       host: ${REDIS_HOST}
       port: ${REDIS_PORT}
 
-  jpa:
-    show-sql: false
-
-
-jwt:
-  cookie-secure: false
-
 billing:
   cron: "0 0 9 * * *"
   interval-days: 30
   retry-interval-days: 3
+
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false

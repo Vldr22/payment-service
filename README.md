@@ -119,7 +119,7 @@
 git clone https://github.com/Vldr22/payment-service.git
 cd payment-service
 cp .env.example .env
-docker compose up --build
+docker compose -f docker-compose.dev.yml up --build
 ```
 
 Ключи Stripe берутся из тестового режима. Администратор создаётся миграцией из переменных
