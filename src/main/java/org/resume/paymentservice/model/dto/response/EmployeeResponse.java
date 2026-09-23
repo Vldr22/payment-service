@@ -18,6 +18,9 @@ public record EmployeeResponse(
         Roles role,
 
         @Schema(description = "Статус аккаунта", example = "ACTIVE")
-        UserStatus status
+        UserStatus status,
+
+        @Schema(description = "Временный пароль, возвращается только при создании", example = "aB3xK9mP")
+        String tempPassword
 ) {
 }

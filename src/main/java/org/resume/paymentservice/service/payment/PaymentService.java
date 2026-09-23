@@ -55,14 +55,20 @@ public class PaymentService {
     @Transactional
     public void updatePaymentStatus(String stripePaymentIntentId, PaymentStatus newStatus) {
         Payment payment = findByStripePaymentIntentId(stripePaymentIntentId);
+        PaymentStatus oldStatus = payment.getStatus();
 
-        if (payment.getStatus() == newStatus) {
+        if (oldStatus == newStatus) {
             log.debug("Payment status unchanged, skipping update: stripeId={}, status={}",
                     stripePaymentIntentId, newStatus);
             return;
         }
 
-        PaymentStatus oldStatus = payment.getStatus();
+        if (!oldStatus.isPossibleTransitionTo(newStatus)) {
+            log.warn("Payment status transition rejected: stripeId={}, {} -> {}",
+                    stripePaymentIntentId, oldStatus, newStatus);
+            return;
+        }
+
         payment.setStatus(newStatus);
         paymentRepository.save(payment);
 

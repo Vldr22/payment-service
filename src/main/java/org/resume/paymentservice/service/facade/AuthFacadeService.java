@@ -58,11 +58,14 @@ public class AuthFacadeService {
     }
 
     // ========== ADMIN ==============
+    /**
+     * Создаёт сотрудника и возвращает временный пароль администратору.
+     */
     public EmployeeResponse createEmployee(EmployeeRegistrationRequest request) {
         String tempPassword = CodeGenerator.generatePassword();
         Staff staff = createStaff(request, tempPassword);
-        log.info("Employee created: email={}, tempPassword={}", staff.getEmail(), tempPassword);
-        return toStaffResponse(staff);
+        log.info("Employee created: email={}", staff.getEmail());
+        return toStaffResponse(staff, tempPassword);
     }
 
     // ========== STAFF ==============
@@ -118,13 +121,14 @@ public class AuthFacadeService {
                 user.getUserStatus());
     }
 
-    private EmployeeResponse toStaffResponse(Staff staff) {
+    private EmployeeResponse toStaffResponse(Staff staff, String tempPassword) {
         return new EmployeeResponse(
                 staff.getName(),
                 staff.getSurname(),
                 staff.getEmail(),
                 staff.getRole(),
-                staff.getUserStatus());
+                staff.getUserStatus(),
+                tempPassword);
     }
 
     private User createClient(ClientRegistrationRequest request, String normalizedPhone) {

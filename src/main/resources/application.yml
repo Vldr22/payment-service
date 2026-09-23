@@ -43,6 +43,11 @@ billing:
   premium-amount: 19.99
   default-currency: USD
 
+verification:
+  code-ttl-seconds: 120
+  max-attempts: 3
+  lockout-minutes: 15
+
 springdoc:
   swagger-ui:
     display-request-duration: true

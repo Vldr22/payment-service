@@ -122,7 +122,7 @@ class BillingOrchestratorTest {
         assertThat(attempt.getStripePaymentIntentId()).isEqualTo(STRIPE_PAYMENT_ID);
         verify(billingAttemptService).save(attempt);
         verify(paymentService).saveBillingPayment(paymentIntent, subscription);
-        verify(subscriptionService, never()).markFailed(any(Subscription.class));
+        verify(subscriptionService, never()).markFailed(any(Subscription.class), any(BillingAttempt.class));
     }
 
     /**
@@ -137,7 +137,7 @@ class BillingOrchestratorTest {
         billingOrchestrator.processSubscription(subscription);
 
         verify(billingAttemptService).markFailed(eq(attempt), anyString());
-        verify(subscriptionService).markFailed(subscription);
+        verify(subscriptionService).markFailed(subscription, attempt);
         verify(paymentService, never()).saveBillingPayment(any(PaymentIntent.class), any(Subscription.class));
     }
 
@@ -155,7 +155,7 @@ class BillingOrchestratorTest {
 
         assertThatNoException().isThrownBy(() -> billingOrchestrator.processSubscription(subscription));
 
-        verify(subscriptionService, never()).markFailed(any(Subscription.class));
+        verify(subscriptionService, never()).markFailed(any(Subscription.class), any(BillingAttempt.class));
         verify(billingAttemptService, never()).markFailed(any(BillingAttempt.class), anyString());
     }
 

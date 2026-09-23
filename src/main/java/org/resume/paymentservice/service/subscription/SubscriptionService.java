@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.resume.paymentservice.exception.AlreadyExistsException;
 import org.resume.paymentservice.exception.NotFoundException;
+import org.resume.paymentservice.model.entity.BillingAttempt;
 import org.resume.paymentservice.model.entity.Payment;
 import org.resume.paymentservice.model.entity.SavedCard;
 import org.resume.paymentservice.model.entity.Subscription;
@@ -60,34 +61,36 @@ public class SubscriptionService {
         );
     }
 
+    /**
+     * Продлевает подписку от периода попытки.
+     */
     @Transactional
-    public void markSucceeded(Subscription subscription, Payment payment) {
-        LocalDateTime now = LocalDateTime.now();
+    public void markSucceeded(Subscription subscription, Payment payment, BillingAttempt attempt) {
+        LocalDateTime nextBillingDate = attempt.getBillingPeriod()
+                .plusDays(billingProperties.getIntervalDays());
+
         subscription.setLastPayment(payment);
         subscription.setRetryCount(0);
         subscription.setSubscriptionStatus(SubscriptionStatus.ACTIVE);
-        subscription.setNextBillingDate(now.plusDays(billingProperties.getIntervalDays()));
-        subscription.setEndDate(now.plusDays(billingProperties.getIntervalDays()));
+        subscription.setNextBillingDate(nextBillingDate);
+        subscription.setEndDate(nextBillingDate);
         subscriptionRepository.save(subscription);
 
         log.info("Subscription renewed: id={}, nextBillingDate={}",
-                subscription.getId(), subscription.getNextBillingDate());
+                subscription.getId(), nextBillingDate);
     }
 
+    /**
+     * Назначает ретрай или приостанавливает подписку.
+     */
     @Transactional
-    public void markFailed(Subscription subscription) {
-        int newRetryCount = subscription.getRetryCount() + 1;
-        subscription.setRetryCount(newRetryCount);
+    public void markFailed(Subscription subscription, BillingAttempt attempt) {
+        subscription.setRetryCount(attempt.getAttemptNumber());
 
-        if (newRetryCount >= billingProperties.getMaxRetryCount()) {
-            subscription.setSubscriptionStatus(SubscriptionStatus.SUSPENDED);
-            log.warn("Subscription suspended after {} retries: id={}",
-                    billingProperties.getMaxRetryCount(), subscription.getId());
+        if (isRetryLimitReached(attempt)) {
+            suspend(subscription);
         } else {
-            subscription.setSubscriptionStatus(SubscriptionStatus.PAST_DUE);
-            subscription.setNextBillingDate(LocalDateTime.now().plusDays(billingProperties.getRetryIntervalDays()));
-            log.warn("Subscription marked PAST_DUE: id={}, retryCount={}",
-                    subscription.getId(), newRetryCount);
+            scheduleRetry(subscription, attempt);
         }
 
         subscriptionRepository.save(subscription);
@@ -116,6 +119,25 @@ public class SubscriptionService {
     }
 
     //Helpers Methods
+    private boolean isRetryLimitReached(BillingAttempt attempt) {
+        return attempt.getAttemptNumber() >= billingProperties.getMaxRetryCount();
+    }
+
+    private void suspend(Subscription subscription) {
+        subscription.setSubscriptionStatus(SubscriptionStatus.SUSPENDED);
+        log.warn("Subscription suspended after {} retries: id={}",
+                billingProperties.getMaxRetryCount(), subscription.getId());
+    }
+
+    private void scheduleRetry(Subscription subscription, BillingAttempt attempt) {
+        subscription.setSubscriptionStatus(SubscriptionStatus.PAST_DUE);
+        subscription.setNextBillingDate(attempt.getBillingPeriod()
+                .plusDays(billingProperties.getRetryIntervalDays()));
+
+        log.warn("Subscription marked PAST_DUE: id={}, retryCount={}",
+                subscription.getId(), attempt.getAttemptNumber());
+    }
+
     private BigDecimal resolveAmount(SubscriptionType type) {
         return switch (type) {
             case BASIC -> billingProperties.getBasicAmount();

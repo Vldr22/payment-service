@@ -152,6 +152,7 @@ class AuthFacadeServiceTest {
 
         assertThat(result).isNotNull();
         assertThat(result.email()).isEqualTo(staff.getEmail());
+        assertThat(result.tempPassword()).isNotBlank();
         verify(staffService).createEmployee(any(), any(), any(), any(), any());
     }
 

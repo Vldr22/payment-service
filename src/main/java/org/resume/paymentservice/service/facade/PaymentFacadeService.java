@@ -108,21 +108,22 @@ public class PaymentFacadeService {
     }
 
     public PaymentResponse getPaymentStatus(String paymentIntentId) {
-        Payment payment = validatePaymentOwner(paymentIntentId);
+        validatePaymentOwner(paymentIntentId);
 
         PaymentResponse stripeResponse = stripeService.getPaymentStatus(paymentIntentId);
         PaymentStatus newStatus = mapStripeStatus(stripeResponse.getStatus());
 
-        if (!payment.getStatus().equals(newStatus)) {
-            paymentService.updatePaymentStatus(paymentIntentId, newStatus);
-        }
+        paymentService.updatePaymentStatus(paymentIntentId, newStatus);
 
         return stripeResponse;
     }
 
-    private Payment validatePaymentOwner(String paymentIntentId) {
+    /**
+     * Проверяет, что платёж принадлежит текущему пользователю.
+     */
+    private void validatePaymentOwner(String paymentIntentId) {
         User currentUser = userService.getCurrentUser();
-        return paymentService.findByStripePaymentIntentIdAndUser(paymentIntentId, currentUser);
+        paymentService.findByStripePaymentIntentIdAndUser(paymentIntentId, currentUser);
     }
 
     private PaymentCreationData buildPaymentCreationData(Long userId, CreatePaymentRequest request,

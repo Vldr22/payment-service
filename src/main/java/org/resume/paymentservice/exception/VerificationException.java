@@ -27,17 +27,10 @@ public class VerificationException extends RuntimeException {
         );
     }
 
-    public static VerificationException emailCodeExpired(String email) {
+    public static VerificationException smsCodeAttemptsExceeded(String phone) {
         return new VerificationException(
-                String.format("%s%s", ErrorMessages.EMAIL_CODE_EXPIRED, email),
-                email
-        );
-    }
-
-    public static VerificationException emailCodeInvalid(String email) {
-        return new VerificationException(
-                String.format("%s%s", ErrorMessages.EMAIL_CODE_INVALID, email),
-                email
+                String.format("%s%s", ErrorMessages.SMS_CODE_ATTEMPTS_EXCEEDED, phone),
+                phone
         );
     }
 }

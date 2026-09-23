@@ -9,6 +9,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.resume.paymentservice.exception.AlreadyExistsException;
 import org.resume.paymentservice.exception.NotFoundException;
+import org.resume.paymentservice.model.entity.BillingAttempt;
 import org.resume.paymentservice.model.entity.Payment;
 import org.resume.paymentservice.model.entity.SavedCard;
 import org.resume.paymentservice.model.entity.Subscription;
@@ -21,6 +22,7 @@ import org.resume.paymentservice.repository.SubscriptionRepository;
 import org.resume.paymentservice.service.subscription.SubscriptionService;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -39,6 +41,7 @@ class SubscriptionServiceTest {
     private static final int INTERVAL_DAYS = 30;
     private static final BigDecimal BASIC_PRICE = new BigDecimal("9.99");
     private static final BigDecimal PREMIUM_PRICE = new BigDecimal("19.99");
+    private static final LocalDateTime BILLING_PERIOD = LocalDateTime.of(2026, 9, 1, 12, 0);
 
     @Mock
     private SubscriptionRepository subscriptionRepository;
@@ -169,30 +172,30 @@ class SubscriptionServiceTest {
 
     // markFailed
     /**
-     * Ключевой тест биллинга: если retryCount не достиг максимума —
-     * подписка переходит в PAST_DUE и планируется следующая попытка списания.
+     * Ключевой тест биллинга: если номер попытки не достиг максимума —
+     * подписка переходит в PAST_DUE, ретрай назначается от периода попытки.
      */
     @Test
     void shouldMarkPastDue_whenRetryCountBelowMax() {
-        subscription.setRetryCount(0);
+        BillingAttempt attempt = billingAttempt(1);
 
-        subscriptionService.markFailed(subscription);
+        subscriptionService.markFailed(subscription, attempt);
 
         assertThat(subscription.getSubscriptionStatus()).isEqualTo(SubscriptionStatus.PAST_DUE);
         assertThat(subscription.getRetryCount()).isEqualTo(1);
-        assertThat(subscription.getNextBillingDate()).isNotNull();
+        assertThat(subscription.getNextBillingDate()).isEqualTo(BILLING_PERIOD.plusDays(RETRY_INTERVAL));
         verify(subscriptionRepository).save(subscription);
     }
 
     /**
-     * Если исчерпаны все попытки (retryCount достиг maxRetryCount) —
+     * Если исчерпаны все попытки (номер попытки достиг maxRetryCount) —
      * подписка переходит в SUSPENDED и больше не будет попыток списания.
      */
     @Test
     void shouldSuspend_whenRetryCountReachesMax() {
-        subscription.setRetryCount(MAX_RETRY_COUNT - 1);
+        BillingAttempt attempt = billingAttempt(MAX_RETRY_COUNT);
 
-        subscriptionService.markFailed(subscription);
+        subscriptionService.markFailed(subscription, attempt);
 
         assertThat(subscription.getSubscriptionStatus()).isEqualTo(SubscriptionStatus.SUSPENDED);
         assertThat(subscription.getRetryCount()).isEqualTo(MAX_RETRY_COUNT);
@@ -202,20 +205,37 @@ class SubscriptionServiceTest {
     // markSucceeded
     /**
      * После успешного списания подписка возвращается в ACTIVE,
-     * retryCount сбрасывается и устанавливается следующая дата биллинга.
+     * retryCount сбрасывается, период считается от якоря попытки.
      */
     @Test
     void shouldMarkActive_andResetRetryCount_whenPaymentSucceeded() {
         Payment payment = Instancio.create(Payment.class);
+        BillingAttempt attempt = billingAttempt(1);
         subscription.setRetryCount(2);
 
-        subscriptionService.markSucceeded(subscription, payment);
+        subscriptionService.markSucceeded(subscription, payment, attempt);
 
         assertThat(subscription.getSubscriptionStatus()).isEqualTo(SubscriptionStatus.ACTIVE);
         assertThat(subscription.getRetryCount()).isEqualTo(0);
         assertThat(subscription.getLastPayment()).isEqualTo(payment);
-        assertThat(subscription.getNextBillingDate()).isAfter(java.time.LocalDateTime.now());
+        assertThat(subscription.getNextBillingDate()).isEqualTo(BILLING_PERIOD.plusDays(INTERVAL_DAYS));
+        assertThat(subscription.getEndDate()).isEqualTo(BILLING_PERIOD.plusDays(INTERVAL_DAYS));
         verify(subscriptionRepository).save(subscription);
+    }
+
+    /**
+     * Повторное продление по той же попытке не сдвигает дату ещё на период.
+     */
+    @Test
+    void shouldKeepSameBillingDate_whenRenewedTwice() {
+        Payment payment = Instancio.create(Payment.class);
+        BillingAttempt attempt = billingAttempt(1);
+
+        subscriptionService.markSucceeded(subscription, payment, attempt);
+        LocalDateTime afterFirstRenewal = subscription.getNextBillingDate();
+        subscriptionService.markSucceeded(subscription, payment, attempt);
+
+        assertThat(subscription.getNextBillingDate()).isEqualTo(afterFirstRenewal);
     }
 
     // cancel
@@ -277,5 +297,12 @@ class SubscriptionServiceTest {
         assertThat(result.getSavedCard()).isEqualTo(savedCard);
         assertThat(result.getSubscriptionType()).isEqualTo(SubscriptionType.PREMIUM);
         assertThat(result.getRetryCount()).isEqualTo(0);
+    }
+
+    private BillingAttempt billingAttempt(int attemptNumber) {
+        return Instancio.of(BillingAttempt.class)
+                .set(field(BillingAttempt::getAttemptNumber), attemptNumber)
+                .set(field(BillingAttempt::getBillingPeriod), BILLING_PERIOD)
+                .create();
     }
 }
