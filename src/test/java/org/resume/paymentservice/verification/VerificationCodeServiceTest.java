@@ -10,6 +10,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.redisson.api.RBucket;
 import org.redisson.api.RedissonClient;
 import org.resume.paymentservice.exception.VerificationException;
+import org.resume.paymentservice.service.verification.SmsSender;
 import org.resume.paymentservice.service.verification.VerificationCodeService;
 
 import java.time.Duration;
@@ -34,6 +35,9 @@ class VerificationCodeServiceTest {
     @Mock
     private RBucket<String> bucket;
 
+    @Mock
+    private SmsSender smsSender;
+
     @InjectMocks
     private VerificationCodeService verificationCodeService;
 
@@ -52,6 +56,16 @@ class VerificationCodeServiceTest {
         verificationCodeService.sendCode(PHONE);
 
         verify(bucket).set(anyString(), eq(Duration.ofSeconds(300)));
+    }
+
+    /**
+     * Проверяет что код уходит в канал доставки, а не остаётся только в Redis.
+     */
+    @Test
+    void shouldPassCodeToSmsSender() {
+        verificationCodeService.sendCode(PHONE);
+
+        verify(smsSender).send(eq(PHONE), anyString());
     }
 
     // verifyCode

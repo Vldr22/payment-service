@@ -1,7 +1,6 @@
 package org.resume.paymentservice.service.verification;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RBucket;
 import org.redisson.api.RedissonClient;
 import org.resume.paymentservice.exception.VerificationException;
@@ -12,12 +11,12 @@ import java.time.Duration;
 
 import static org.resume.paymentservice.contants.VerificationConstants.*;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class VerificationCodeService {
 
     private final RedissonClient redissonClient;
+    private final SmsSender smsSender;
 
     public void sendCode(String recipient) {
         String code = CodeGenerator.generateVerificationCode();
@@ -25,7 +24,7 @@ public class VerificationCodeService {
         RBucket<String> bucket = getBucket(recipient);
         bucket.set(code, Duration.ofSeconds(CODE_TTL_SECONDS));
 
-        log.info("Verification code sent to {}: {}", recipient, code);
+        smsSender.send(recipient, String.format(CODE_MESSAGE_FORMAT, code));
     }
 
     public void verifyCode(String recipient, String code) {
