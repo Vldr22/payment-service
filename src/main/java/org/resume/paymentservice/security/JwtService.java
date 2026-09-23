@@ -7,7 +7,6 @@ import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
 import org.resume.paymentservice.model.enums.Roles;
 import org.resume.paymentservice.properties.JwtProperties;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
@@ -20,7 +19,6 @@ import static org.resume.paymentservice.contants.SecurityConstants.CLAIM_ROLE;
 
 @Slf4j
 @Service
-@EnableConfigurationProperties(JwtProperties.class)
 public class JwtService {
 
     private final SecretKey key;
@@ -65,7 +63,7 @@ public class JwtService {
         return extractClaims(token).getId();
     }
 
-    public Date extractExpiration(String token) {
+    private Date extractExpiration(String token) {
         return extractClaims(token).getExpiration();
     }
 

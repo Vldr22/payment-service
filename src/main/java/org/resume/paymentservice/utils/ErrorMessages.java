@@ -53,8 +53,7 @@ public class ErrorMessages {
     // Verification errors
     public static final String SMS_CODE_EXPIRED = "SMS code expired for: ";
     public static final String SMS_CODE_INVALID = "Invalid SMS code for: ";
-    public static final String EMAIL_CODE_EXPIRED = "Email code expired for: ";
-    public static final String EMAIL_CODE_INVALID = "Invalid email code for: ";
+    public static final String SMS_CODE_ATTEMPTS_EXCEEDED = "Too many failed attempts, verification is locked for: ";
 
     // Subscription errors
     public static final String SUBSCRIPTION_NOT_FOUND_BY_ID = "Subscription not found with id: ";
