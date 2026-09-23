@@ -76,7 +76,7 @@ public class BillingOrchestrator {
     private void failAttempt(Subscription subscription, BillingAttempt attempt, Exception e) {
         log.error("Charge failed: subscriptionId={}, error={}", subscription.getId(), e.getMessage());
         billingAttemptService.markFailed(attempt, e.getMessage());
-        subscriptionService.markFailed(subscription);
+        subscriptionService.markFailed(subscription, attempt);
     }
 
     private BillingChargeData buildChargeData(Subscription subscription, LocalDateTime billingPeriod) {
