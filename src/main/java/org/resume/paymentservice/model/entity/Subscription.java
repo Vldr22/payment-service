@@ -15,9 +15,7 @@ import java.time.LocalDateTime;
 @Entity
 @Getter @Setter
 @NoArgsConstructor
-@Table(name = "subscriptions", indexes = {
-        @Index(name = "idx_subscriptions_billing", columnList = "next_billing_date, subscription_status")
-})
+@Table(name = "subscriptions")
 public class Subscription {
 
     @Id

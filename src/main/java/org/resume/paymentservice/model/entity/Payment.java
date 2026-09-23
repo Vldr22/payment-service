@@ -16,10 +16,7 @@ import java.time.LocalDateTime;
 @Getter @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "payments", indexes = {
-        @Index(name = "idx_stripe_payment_intent_id", columnList = "stripe_payment_intent_id"),
-        @Index(name = "idx_user_id", columnList = "user_id")
-})
+@Table(name = "payments")
 public class Payment {
 
     @Id

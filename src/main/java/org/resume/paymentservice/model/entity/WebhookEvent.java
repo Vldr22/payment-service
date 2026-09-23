@@ -15,9 +15,7 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "webhook_events", indexes = {
-        @Index(name = "idx.event_id", columnList = "eventId")
-})
+@Table(name = "webhook_events")
 public class WebhookEvent {
 
     @Id
